@@ -1,0 +1,35 @@
+# This is a basic workflow to help you get started with Actions
+
+name: CI
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+# events but only for the master branch
+on:
+  push:
+    branches: [ android-10.0-pre ]
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  container:
+    runs-on: ubuntu-16.04
+    container: androiabledroid/droid-builder-test:latest
+    env:
+      MANIFEST_BRANCH: 'android-10.0'
+      VERSION: '2.9.1'
+      VENDOR: 'xiaomi'
+      CODENAME: 'cmi'
+      BUILD_LUNCH: 'omni_cmi-eng'
+      TEST_BUILD: 'true'
+    steps:
+      - run: |
+          mkdir work && cd work
+          repo init -q -u https://github.com/PitchBlackRecoveryProject/manifest_pb.git -b ${MANIFEST_BRANCH} --depth 1
+          time repo sync -c -q --force-sync --no-clone-bundle --no-tags -j$(nproc --all)
+          rm -rf vendor/pb
+          git clone https://github.com/PitchBlackRecoveryProject/vendor_pb -b pb vendor/pb --depth=1com/PitchBlackRecoveryProject/manifest_pb.git -b ${MANIFEST_BRANCH} --depth=1
+          git clone --quiet --progress https://github.com/AndroiableDroid/android_device_xiaomi_cmi-pbrp device/xiaomi/cmi
+          source build/envsetup.sh
+          lunch ${BUILD_LUNCH}
+          make -j$(nproc --all) recoveryimage
+        name: Run in container
